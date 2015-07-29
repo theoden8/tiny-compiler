@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import re;
-import sys;
+import sys
+import re
 
 class	Rule:
 	source	= ""
@@ -22,10 +22,10 @@ def	recurse(string, rules):
 
 rules	= []
 string	= ""
-thesource = raw_input();
+thesource = raw_input()
 while(1):
 	try:
-		string = raw_input();
+		string = raw_input()
 		splitter = re.split('\s+', string, 1)
 		rules.append(Rule(splitter[0], splitter[1]))
 	except EOFError:
