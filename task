@@ -1,13 +1,6 @@
-multicharactered nonterminals and terminals
-
-
-(8+4)/(3+4*5)-1
 Start Expression
 Expression Expression + Product|Expression - Product|Product
 Product Product * Multiplier|Product / Multiplier|Multiplier
 Multiplier (Expression)|Number
-Number foo|bar
-
-foo + bar * (foo - bar)
-
-
+Number	Number Digit|
+Digit	0|1|2|3|4|5|6|7|8|9

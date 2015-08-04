@@ -4,9 +4,38 @@ import string
 import sys
 import re
 
-INITIAL_NONTERMINAL = 'S'
+INITIAL_NONTERMINAL = 'Start'
 SOURCE, RESULT = range(2)
 
+def prespace(text):
+	le = 0
+	while(len(text) > le and text[le] in string.whitespace):
+		le += 1
+	return le
+
+def left(text):
+	if(not text):
+		return ""
+	w = prespace(text)
+
+#	sys.stdout.write("\033[1;101;30m" + text[:w] + "\033[1;103;30m" + text[w:] + "\033[0m\n" + text[:w] + "\033[1;7m")
+	tokentype = ""
+	for it in [string.digits, string.ascii_letters + string.digits, string.punctuation, string.whitespace]:
+		if(text[w] in it):
+			tokentype = it
+			break
+	if(not tokentype):
+#		print text[w:] + "\033[0m"
+#		print
+		return text[w:]
+	for i in xrange(w, len(text)):
+		if(text[i] not in tokentype):
+#			print text[w:i] + "\033[0m"
+#			print
+			return text[w:i]
+#	print text[w:] + "\033[0m"
+#	print
+	return text[w:]
 
 class State:
 	def __init__(self, begin, nonterminal, parsed, remains, children):
@@ -37,8 +66,8 @@ class State:
 		return State(
 			self.begin,
 			self.nonterminal,
-			self.parsed + self.remains[0],
-			self.remains[1:],
+			self.parsed + left(self.remains),
+			self.remains[prespace(self.remains) + len(left(self.remains)):],
 			self.children + [child]
 		)
 
@@ -55,16 +84,16 @@ class EarleyParser:
 
 	def complete(self, completed, cursor):
 		for s in self.states[completed.begin]:
-			if len(s.remains) > 0 and s.remains[0] == completed.nonterminal:
+			if s.remains and left(s.remains) == completed.nonterminal:
 				self.push(cursor, s.step(completed))
 
-	def predict(self, state, i):
-		for r in self.rules[state.remains[0]]:
-			self.push(i, State(i, state.remains[0], "", r, []))
+	def predict(self, state, cursor):
+		for r in self.rules[left(state.remains)]:
+			self.push(cursor, State(cursor, left(state.remains), "", r, []))
 
-	def scan(self, state, symbol, cursor):
-		if state.remains[0] == symbol:
-			self.push(cursor + 1, state.step(None))
+	def scan(self, state, token, cursor):
+		if left(state.remains) == token:
+			self.push(cursor, state.step(None))
 
 	def parse(self, text):
 		self.states = [
@@ -75,14 +104,19 @@ class EarleyParser:
 			if not i else [] for i in range(len(text) + 1)
 		]
 
-		for i in range(len(text) + 1):
+		i = 0
+		while i <= len(text):
+			print("\033[1;102;30m" + text[:i] + "\033[1;103;30m" + text[i:] + "\033[0m")
+			cursor = i + prespace(text[i:])
 			for s in self.states[i]:
-				if len(s.remains) == 0:
-					self.complete(s, i)
-				elif s.remains[0] in self.rules:
-					self.predict(s, i)
+				print s
+				if not s.remains:
+					self.complete(s, cursor)
+				elif left(s.remains) in self.rules:
+					self.predict(s, cursor)
 				elif i < len(text):
-					self.scan(s, text[i], i)
+					self.scan(s, left(text[i:]), cursor)
+			i += max(1, cursor - i + len(left(text[i:])))
 
 		for s in self.states[-1]:
 			if len(s.remains) == 0 and s.begin == 0 and s.nonterminal == INITIAL_NONTERMINAL:
@@ -113,12 +147,16 @@ def calcTree(s):
 	return float(s.parsed[0])
 
 if __name__ == "__main__":
-	MEGASOURCE = raw_input()
+	MEGASOURCE = ""
+	for line in sys.stdin:
+		if(line == "END\n"):
+			break
+		MEGASOURCE += line
+	MEGASOURCE = MEGASOURCE[:-1]
 	RULE_SET = {}
 	for line in sys.stdin:
-		pair = line.split()
-		source = pair[0]
-		RULE_SET[source] = pair[1].split('|')
+		pair = re.split("\s+", line[:-1], 1)
+		RULE_SET[pair[0]] = pair[1].split('|')
 	for nonterminal in RULE_SET:
 		for product in RULE_SET[nonterminal]:
 			print(
@@ -129,5 +167,6 @@ if __name__ == "__main__":
 	print(MEGASOURCE)
 	ep = EarleyParser(RULE_SET)
 	s = ep.parse(MEGASOURCE)
-	if s is not None:
-		print(calcTree(s))
+	print s
+#	if s is not None:
+#		print(calcTree(s))
