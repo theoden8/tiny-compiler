@@ -5,37 +5,56 @@ import sys
 import re
 
 INITIAL_NONTERMINAL = 'Start'
-SOURCE, RESULT = range(2)
 
-def prespace(text):
-	le = 0
-	while(len(text) > le and text[le] in string.whitespace):
-		le += 1
-	return le
 
-def left(text):
-	if(not text):
-		return ""
-	w = prespace(text)
+class Tokenizer:
+	BLANK, LETTER, DIGIT, DOT = range(4)
 
-#	sys.stdout.write("\033[1;101;30m" + text[:w] + "\033[1;103;30m" + text[w:] + "\033[0m\n" + text[:w] + "\033[1;7m")
-	tokentype = ""
-	for it in [string.digits, string.ascii_letters + string.digits, string.punctuation, string.whitespace]:
-		if(text[w] in it):
-			tokentype = it
-			break
-	if(not tokentype):
-#		print text[w:] + "\033[0m"
-#		print
-		return text[w:]
-	for i in xrange(w, len(text)):
-		if(text[i] not in tokentype):
-#			print text[w:i] + "\033[0m"
-#			print
-			return text[w:i]
-#	print text[w:] + "\033[0m"
-#	print
-	return text[w:]
+	def __init__(self):
+		pass
+
+	def char_type(self, char):
+		if(char.isspace()):
+			return self.BLANK
+		elif(char.isalpha() or char == '_'):
+			return self.LETTER
+		elif(char.isdigit()):
+			return self.DIGIT
+		else:
+			return self.DOT
+		raise Exception("Tokenizer::undefined char_type")
+
+	def tokenize(self, text):
+		tokens = []
+		token = ""
+		p = ""
+		for c in text:
+			t = self.char_type(c)
+			if(not token and t != self.BLANK):
+				token = c
+			elif(t == self.BLANK):
+				if(not token):
+					tokens += [token]
+					token = ""
+			elif(
+				t == self.LETTER and (
+					p == self.LETTER or p == self.DIGIT
+				)
+				or
+				t == self.DIGIT and (
+					p == self.DIGIT
+				)
+			):
+				token += c
+			else:
+				tokens += [token]
+				token = c
+			p = t
+		if(token):
+			tokens += [token]
+			token = ""
+		return tokens
+
 
 class State:
 	def __init__(self, begin, nonterminal, parsed, remains, children):
@@ -49,8 +68,8 @@ class State:
 		return(
 			"\033[1;40;97m[ " +
 			"\033[1;44;97m " + str(self.begin) + " \033[107;30m:"
-			"\033[1;102;30m" + self.parsed +
-			"\033[1;103;30m" + self.remains +
+			"\033[1;102;30m" + str(Tokenizer().tokenize(self.parsed)) +
+			"\033[1;103;30m" + str(self.remains) +
 			"\033[1;40;97m ]\033[0m"
 		)
 
@@ -66,8 +85,8 @@ class State:
 		return State(
 			self.begin,
 			self.nonterminal,
-			self.parsed + left(self.remains),
-			self.remains[prespace(self.remains) + len(left(self.remains)):],
+			self.parsed + self.remains[0],
+			self.remains[i:],
 			self.children + [child]
 		)
 
@@ -84,16 +103,16 @@ class EarleyParser:
 
 	def complete(self, completed, cursor):
 		for s in self.states[completed.begin]:
-			if s.remains and left(s.remains) == completed.nonterminal:
+			if len(s.remains) > 0 and s.remains[0] == completed.nonterminal:
 				self.push(cursor, s.step(completed))
 
-	def predict(self, state, cursor):
-		for r in self.rules[left(state.remains)]:
-			self.push(cursor, State(cursor, left(state.remains), "", r, []))
+	def predict(self, state, i):
+		for r in self.rules[state.remains[0]]:
+			self.push(i, State(i, state.remains[0], "", r, []))
 
 	def scan(self, state, token, cursor):
-		if left(state.remains) == token:
-			self.push(cursor, state.step(None))
+		if state.remains[0] == token:
+			self.push(cursor + 1, state.step(None))
 
 	def parse(self, text):
 		self.states = [
@@ -103,26 +122,23 @@ class EarleyParser:
 			]
 			if not i else [] for i in range(len(text) + 1)
 		]
-
-		i = 0
-		while i <= len(text):
-			print("\033[1;102;30m" + text[:i] + "\033[1;103;30m" + text[i:] + "\033[0m")
-			cursor = i + prespace(text[i:])
+		for i in range(len(text) + 1):
+			print "\033[1;92m" + str(text[:i]) + "\033[93m" + str(text[i:]) + "\033[0m"
 			for s in self.states[i]:
 				print s
-				if not s.remains:
-					self.complete(s, cursor)
-				elif left(s.remains) in self.rules:
-					self.predict(s, cursor)
+				if len(s.remains) == 0:
+					self.complete(s, i)
+				elif s.remains[0] in self.rules:
+					self.predict(s, i)
 				elif i < len(text):
-					self.scan(s, left(text[i:]), cursor)
-			i += max(1, cursor - i + len(left(text[i:])))
+					self.scan(s, text[i], i)
 
 		for s in self.states[-1]:
 			if len(s.remains) == 0 and s.begin == 0 and s.nonterminal == INITIAL_NONTERMINAL:
 				return s
 
 		return None
+
 
 def calcTree(s):
 	rule = s.nonterminal + ":" + s.parsed
@@ -146,27 +162,34 @@ def calcTree(s):
 		return calcTree(s.children[0])
 	return float(s.parsed[0])
 
-if __name__ == "__main__":
-	MEGASOURCE = ""
+def get_text():
+	text = ""
 	for line in sys.stdin:
 		if(line == "END\n"):
 			break
-		MEGASOURCE += line
-	MEGASOURCE = MEGASOURCE[:-1]
+		text += line
+	return text[:-1]
+
+if __name__ == "__main__":
+	MEGASOURCE = get_text()
 	RULE_SET = {}
 	for line in sys.stdin:
+		if(line == "END\n"):
+			break
 		pair = re.split("\s+", line[:-1], 1)
 		RULE_SET[pair[0]] = pair[1].split('|')
+	for r in RULE_SET:
+		for i in range(len(RULE_SET[r])):
+			RULE_SET[r][i] = Tokenizer().tokenize(RULE_SET[r][i])
 	for nonterminal in RULE_SET:
 		for product in RULE_SET[nonterminal]:
 			print(
-				'\033[1;4;91mRule\033[0m :\t\033[93m[ ' + nonterminal +
-				' ]\t\033[1;97m->\t\033[92m[ ' + product +
-				' ]\033[0m'
+				'\033[1;4;91mRule\033[0m :\t\033[93m[ ' + str(nonterminal) +
+				' ]\t\033[1;97m->\t\033[92m' + str(product) +
+				'\033[0m'
 			)
-	print(MEGASOURCE)
 	ep = EarleyParser(RULE_SET)
-	s = ep.parse(MEGASOURCE)
+	s = ep.parse(Tokenizer().tokenize(MEGASOURCE))
 	print s
 #	if s is not None:
 #		print(calcTree(s))
