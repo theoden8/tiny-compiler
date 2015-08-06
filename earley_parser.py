@@ -68,7 +68,7 @@ class State:
 		return(
 			"\033[1;40;97m[ " +
 			"\033[1;44;97m " + str(self.begin) + " \033[107;30m:"
-			"\033[1;102;30m" + str(Tokenizer().tokenize(self.parsed)) +
+			"\033[1;102;30m" + str(self.parsed) +
 			"\033[1;103;30m" + str(self.remains) +
 			"\033[1;40;97m ]\033[0m"
 		)
@@ -85,8 +85,8 @@ class State:
 		return State(
 			self.begin,
 			self.nonterminal,
-			self.parsed + self.remains[0],
-			self.remains[i:],
+			self.parsed + [self.remains[0]],
+			self.remains[1:],
 			self.children + [child]
 		)
 
@@ -108,7 +108,7 @@ class EarleyParser:
 
 	def predict(self, state, i):
 		for r in self.rules[state.remains[0]]:
-			self.push(i, State(i, state.remains[0], "", r, []))
+			self.push(i, State(i, state.remains[0], [], r, []))
 
 	def scan(self, state, token, cursor):
 		if state.remains[0] == token:
@@ -117,16 +117,16 @@ class EarleyParser:
 	def parse(self, text):
 		self.states = [
 			[
-				State(0, INITIAL_NONTERMINAL, "", r, [])
+				State(0, INITIAL_NONTERMINAL, [], r, [])
 				for r in self.rules[INITIAL_NONTERMINAL]
 			]
 			if not i else [] for i in range(len(text) + 1)
 		]
 		for i in range(len(text) + 1):
-			print "\033[1;92m" + str(text[:i]) + "\033[93m" + str(text[i:]) + "\033[0m"
+			print "\033[1;92m" + str(text[:i]) + "\033[35m █ \033[93m" + str(text[i:]) + "\033[0m"
 			for s in self.states[i]:
 				print s
-				if len(s.remains) == 0:
+				if not s.remains:
 					self.complete(s, i)
 				elif s.remains[0] in self.rules:
 					self.predict(s, i)
@@ -141,31 +141,35 @@ class EarleyParser:
 
 
 def calcTree(s):
-	rule = s.nonterminal + ":" + s.parsed
-	if rule == "S:D":
+	parsedstr = ""
+	for each in s.parsed:
+		parsedstr += each
+	rule = s.nonterminal + ":" + parsedstr
+	if rule == "Start:Expression":
 		return calcTree(s.children[0])
-	if rule == "D:D+P":
+	elif rule == "Expression:Expression+Product":
 		return calcTree(s.children[0]) + calcTree(s.children[2])
-	if rule == "D:D-P":
+	elif rule == "Expression:Expression-Product":
 		return calcTree(s.children[0]) - calcTree(s.children[2])
-	if rule == "D:P":
+	elif rule == "Expression:Product":
 		return calcTree(s.children[0])
-	if rule == "P:P*M":
+	elif rule == "Product:Product*Multiplier":
 		return calcTree(s.children[0]) * calcTree(s.children[2])
-	if rule == "P:P/M":
+	elif rule == "Product:Product/Multiplier":
 		return calcTree(s.children[0]) / calcTree(s.children[2])
-	if rule == "P:M":
+	elif rule == "Product:Multiplier":
 		return calcTree(s.children[0])
-	if rule == "M:(D)":
+	elif rule == "Multiplier:(Expression)":
 		return calcTree(s.children[1])
-	if rule == "M:N":
+	elif rule == "Multiplier:Number":
 		return calcTree(s.children[0])
 	return float(s.parsed[0])
 
 def get_text():
+	END = "END\n"
 	text = ""
 	for line in sys.stdin:
-		if(line == "END\n"):
+		if(line == END):
 			break
 		text += line
 	return text[:-1]
@@ -190,6 +194,7 @@ if __name__ == "__main__":
 			)
 	ep = EarleyParser(RULE_SET)
 	s = ep.parse(Tokenizer().tokenize(MEGASOURCE))
+	print "="*100
 	print s
-#	if s is not None:
-#		print(calcTree(s))
+	if s is not None:
+		print(calcTree(s))

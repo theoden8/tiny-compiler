@@ -2,5 +2,5 @@ Start Expression
 Expression Expression + Product|Expression - Product|Product
 Product Product * Multiplier|Product / Multiplier|Multiplier
 Multiplier (Expression)|Number
-Number Number0|Number1|Number2|Number3|Number4|Number5|Number6|Number7|Number8|Number9|
+Number 0|1|2|3|4|5|6|7|8|9
 END
