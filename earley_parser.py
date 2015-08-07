@@ -168,30 +168,10 @@ class EarleyParser:
 		return None
 
 
-def calcTree(s):
-	parsedstr = ""
-	for each in s.parsed:
-		parsedstr += each
-	rule = s.nonterminal + ":" + parsedstr
-	if rule == "Start:Expression":
-		return calcTree(s.children[0])
-	elif rule == "Expression:Expression+Product":
-		return calcTree(s.children[0]) + calcTree(s.children[2])
-	elif rule == "Expression:Expression-Product":
-		return calcTree(s.children[0]) - calcTree(s.children[2])
-	elif rule == "Expression:Product":
-		return calcTree(s.children[0])
-	elif rule == "Product:Product*Multiplier":
-		return calcTree(s.children[0]) * calcTree(s.children[2])
-	elif rule == "Product:Product/Multiplier":
-		return calcTree(s.children[0]) / calcTree(s.children[2])
-	elif rule == "Product:Multiplier":
-		return calcTree(s.children[0])
-	elif rule == "Multiplier:(Expression)":
-		return calcTree(s.children[1])
-	elif rule == "Multiplier:Number":
-		return calcTree(s.children[0])
-	return float(s.parsed[0])
+def PrintTree(s, indend=0):
+	print('\t' * indent + str(s))
+	for c in s.children:
+		PrintTree(c, indent + 1)
 
 def get_text():
 	END = "END\n"
