@@ -56,6 +56,27 @@ class Tokenizer:
 		return tokens
 
 
+class PrankyHack:
+	FOR, WHILE, IF, ELIF, ELSE, UNTIL, SWITCH, CASE, C_BR_Open, C_BR_Close, SEMICOLUMN, COMMA, DOT, ASSIGNMENT = range(14)
+	MATCH = {
+		'for'        : FOR,
+		'while'      : WHILE,
+		'if'         : IF,
+		'elif'       : ELIF,
+		'else'       : ELSE,
+		'until'      : UNTIL,
+		'switch'     : SWITCH,
+		'case'       : CASE,
+		'{'          : C_BR_Open,
+		'}'          : C_BR_Close,
+		';'          : SEMICOLUMN,
+		','          : COMMA,
+		'.'          : DOT,
+		'='          : ASSIGNMENT,
+	}
+	def dark_deeds(self, text):
+		return [ self.MATCH[w] if w in self.MATCH else w for w in text ]
+
 class State:
 	def __init__(self, begin, nonterminal, parsed, remains, children):
 		self.begin = begin
@@ -95,6 +116,13 @@ class EarleyParser:
 	def __init__(self, rules):
 		self.rules = rules
 
+	def match_token(self, template, token):
+		if type(token) == int and type(template) == int:
+			return template == token
+		if type(token) == str and type(template) == str and template not in self.rules:
+			return True
+		return False
+
 	def push(self, cursor, state):
 		for s in self.states[cursor]:
 			if s == state:
@@ -111,7 +139,7 @@ class EarleyParser:
 			self.push(i, State(i, state.remains[0], [], r, []))
 
 	def scan(self, state, token, cursor):
-		if state.remains[0] == token:
+		if self.match_token(state.remains[0], token):
 			self.push(cursor + 1, state.step(None))
 
 	def parse(self, text):
@@ -175,26 +203,27 @@ def get_text():
 	return text[:-1]
 
 if __name__ == "__main__":
+	t = Tokenizer()
+	p = PrankyHack()
+
 	MEGASOURCE = get_text()
+
 	RULE_SET = {}
 	for line in sys.stdin:
 		if(line == "END\n"):
 			break
-		pair = re.split("\s+", line[:-1], 1)
-		RULE_SET[pair[0]] = pair[1].split('|')
+		rules = p.dark_deeds(t.tokenize(line))
+		if rules[0] not in RULE_SET:
+			RULE_SET[rules[0]] = []
+		RULE_SET[rules[0]].append(rules[1:])
 	for r in RULE_SET:
-		for i in range(len(RULE_SET[r])):
-			RULE_SET[r][i] = Tokenizer().tokenize(RULE_SET[r][i])
-	for nonterminal in RULE_SET:
-		for product in RULE_SET[nonterminal]:
-			print(
-				'\033[1;4;91mRule\033[0m :\t\033[93m[ ' + str(nonterminal) +
-				' ]\t\033[1;97m->\t\033[92m' + str(product) +
-				'\033[0m'
-			)
+		print(r, RULE_SET[r])
+
 	ep = EarleyParser(RULE_SET)
-	s = ep.parse(Tokenizer().tokenize(MEGASOURCE))
+	s = ep.parse(p.dark_deeds(t.tokenize(MEGASOURCE)))
+	print MEGASOURCE
+	print Tokenizer().tokenize(MEGASOURCE)
 	print "="*100
 	print s
-	if s is not None:
-		print(calcTree(s))
+#	if s is not None:
+#		print(calcTree(s))
