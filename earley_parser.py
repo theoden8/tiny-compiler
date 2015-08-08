@@ -168,7 +168,9 @@ class EarleyParser:
 		return None
 
 
-def PrintTree(s, indend=0):
+def PrintTree(s, indent=0):
+	if(not s):
+		return
 	print('\t' * indent + str(s))
 	for c in s.children:
 		PrintTree(c, indent + 1)
@@ -205,5 +207,5 @@ if __name__ == "__main__":
 	print Tokenizer().tokenize(MEGASOURCE)
 	print "="*100
 	print s
-#	if s is not None:
-#		print(calcTree(s))
+	if s is not None:
+		PrintTree(s)
