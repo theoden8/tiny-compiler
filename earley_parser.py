@@ -4,78 +4,25 @@ import string
 import sys
 import re
 
+from Tokenizer import Tokenizer
+
 INITIAL_NONTERMINAL = 'Start'
 
 
-class Tokenizer:
-	BLANK, LETTER, DIGIT, DOT = range(4)
-
-	def __init__(self):
-		pass
-
-	def char_type(self, char):
-		if(char.isspace()):
-			return self.BLANK
-		elif(char.isalpha() or char == '_'):
-			return self.LETTER
-		elif(char.isdigit()):
-			return self.DIGIT
-		else:
-			return self.DOT
-		raise Exception("Tokenizer::undefined char_type")
-
-	def tokenize(self, text):
-		tokens = []
-		token = ""
-		p = ""
-		for c in text:
-			t = self.char_type(c)
-			if(not token and t != self.BLANK):
-				token = c
-			elif(t == self.BLANK):
-				if(not token):
-					tokens += [token]
-					token = ""
-			elif(
-				t == self.LETTER and (
-					p == self.LETTER or p == self.DIGIT
-				)
-				or
-				t == self.DIGIT and (
-					p == self.DIGIT
-				)
-			):
-				token += c
-			else:
-				tokens += [token]
-				token = c
-			p = t
-		if(token):
-			tokens += [token]
-			token = ""
-		return tokens
-
-
 class PrankyHack:
-	FOR, WHILE, IF, ELIF, ELSE, UNTIL, SWITCH, CASE, C_BR_Open, C_BR_Close, SEMICOLUMN, COMMA, DOT, ASSIGNMENT = range(14)
-	MATCH = {
-		'for'        : FOR,
-		'while'      : WHILE,
-		'if'         : IF,
-		'elif'       : ELIF,
-		'else'       : ELSE,
-		'until'      : UNTIL,
-		'switch'     : SWITCH,
-		'case'       : CASE,
-		'{'          : C_BR_Open,
-		'}'          : C_BR_Close,
-		';'          : SEMICOLUMN,
-		','          : COMMA,
-		'.'          : DOT,
-		'='          : ASSIGNMENT,
-	}
+	MATCH = {}
+	c = 0
+	for i in [	'for', 'while', 'until',
+			'if', 'unless', 'elif', 'else',
+			'switch', 'case',
+			'{', '}',
+			';', ',', '.',
+			'=' ]:
+		MATCH[i] = c
+		c += 1
+
 	def dark_deeds(self, text):
-		return [ self.MATCH[w] if w in self.MATCH else w for w in text ]
+		return [self.MATCH[w] if w in self.MATCH else w for w in text]
 
 class State:
 	def __init__(self, begin, nonterminal, parsed, remains, children):
@@ -175,36 +122,13 @@ def PrintTree(s, indent=0):
 	for c in s.children:
 		PrintTree(c, indent + 1)
 
-def get_text():
-	END = "END\n"
-	text = ""
-	for line in sys.stdin:
-		if(line == END):
-			break
-		text += line
-	return text[:-1]
-
 if __name__ == "__main__":
 	t = Tokenizer()
 	p = PrankyHack()
-
-	MEGASOURCE = get_text()
-
-	RULE_SET = {}
-	for line in sys.stdin:
-		if(line == "END\n"):
-			break
-		rules = p.dark_deeds(t.tokenize(line))
-		if rules[0] not in RULE_SET:
-			RULE_SET[rules[0]] = []
-		RULE_SET[rules[0]].append(rules[1:])
-	for r in RULE_SET:
-		print(r, RULE_SET[r])
-
-	ep = EarleyParser(RULE_SET)
-	s = ep.parse(p.dark_deeds(t.tokenize(MEGASOURCE)))
-	print MEGASOURCE
-	print Tokenizer().tokenize(MEGASOURCE)
+	source = t.get_list()
+	rules = t.get_rules(p)
+	ep = EarleyParser(rules)
+	s = ep.parse(p.dark_deeds(source))
 	print "="*100
 	print s
 	if s is not None:
