@@ -4,25 +4,10 @@ import string
 import sys
 import re
 
-from Tokenizer import Tokenizer
+from Tokenizer  import Tokenizer
+from PrankyHack import PrankyHack
 
 INITIAL_NONTERMINAL = 'Start'
-
-
-class PrankyHack:
-	MATCH = {}
-	c = 0
-	for i in [	'for', 'while', 'until',
-			'if', 'unless', 'elif', 'else',
-			'switch', 'case',
-			'{', '}',
-			';', ',', '.',
-			'=' ]:
-		MATCH[i] = c
-		c += 1
-
-	def dark_deeds(self, text):
-		return [self.MATCH[w] if w in self.MATCH else w for w in text]
 
 class State:
 	def __init__(self, begin, nonterminal, parsed, remains, children):
