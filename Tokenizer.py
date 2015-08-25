@@ -61,6 +61,10 @@ class Tokenizer:
 			text += line
 		return self.tokenize(text[:-1])
 
+	def print_rules(self, RULE_SET):
+		for r in RULE_SET:
+			print "\t\033[0;1;4;40;96m" + str(r) + "\033[0;1;35m" + " "*(11 - len(str(r))) + "-> " + "\033[0;1;40;91m" + str(RULE_SET[r]) + "\033[0m"
+
 	def get_rules(self, p):
 		END = "END\n"
 		RULE_SET = {}
@@ -71,6 +75,5 @@ class Tokenizer:
 			if rules[0] not in RULE_SET:
 				RULE_SET[rules[0]] = []
 			RULE_SET[rules[0]].append(rules[1:])
-		for r in RULE_SET:
-			print(r, RULE_SET[r])
+		self.print_rules(RULE_SET)
 		return RULE_SET

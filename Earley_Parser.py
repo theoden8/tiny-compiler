@@ -4,8 +4,8 @@ import string
 import sys
 import re
 
-from Tokenizer  import Tokenizer
-from PrankyHack import PrankyHack
+from Tokenizer  import *
+from PrankyHack import *
 
 INITIAL_NONTERMINAL = 'Start'
 
@@ -23,7 +23,7 @@ class State:
 			"\033[1;44;97m " + str(self.begin) + " \033[107;30m:"
 			"\033[1;102;30m" + str(self.parsed) +
 			"\033[1;103;30m" + str(self.remains) +
-			"\033[1;40;97m ]\033[0m"
+			"\033[1;40;97m ] > " + str(self.children) +"\033[0m"
 		)
 
 	def __eq__(self, other):
@@ -72,7 +72,7 @@ class EarleyParser:
 
 	def scan(self, state, token, cursor):
 		if self.match_token(state.remains[0], token):
-			self.push(cursor + 1, state.step(None))
+			self.push(cursor + 1, state.step(token))
 
 	def parse(self, text):
 		self.states = [
@@ -101,20 +101,7 @@ class EarleyParser:
 
 
 def PrintTree(s, indent=0):
-	if(not s):
-		return
-	print('\t' * indent + str(s))
-	for c in s.children:
-		PrintTree(c, indent + 1)
-
-if __name__ == "__main__":
-	t = Tokenizer()
-	p = PrankyHack()
-	source = t.get_list()
-	rules = t.get_rules(p)
-	ep = EarleyParser(rules)
-	s = ep.parse(p.dark_deeds(source))
-	print "="*100
-	print s
-	if s is not None:
-		PrintTree(s)
+	if type(s) not in [type(None), int, str]:
+		print('\t' * indent + str(s))
+		for c in s.children:
+			PrintTree(c, indent + 1)

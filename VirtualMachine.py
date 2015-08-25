@@ -6,6 +6,7 @@ import operator
 
 
 class VM:
+	SIGEXIT = KeyboardInterrupt
 	def push(self):
 		self.stack.append(self.progue[self.line + 1])
 		self.line += 2
@@ -37,11 +38,18 @@ class VM:
 			self.line += 1
 		return opn
 
-	def exit(self):
-		print self.stack
-		exit(0)
+	def value(self):
+		self.stack.append(self.var_values[self.progue[self.line + 1]])
+		self.line += 2
 
-	PUSH, JUMP, JUMPIF, JUMPUNL, EXIT, NOT, NEG, POS, ABS, LT, LE, EQ, NE, GE, GT, GT, OR, AND, XOR, LSHIFT, RSHIFT, MOD, ADD, SUB, MUL, DIV, POW = range(27)
+	def assign(self):
+		self.var_values[self.progue[self.line + 1]] = self.stack.pop()
+		self.line += 2
+
+	def exit(self):
+		raise VM.SIGEXIT
+
+	PUSH, JUMP, JUMPIF, JUMPUNL, EXIT, NOT, NEG, POS, ABS, LT, LE, EQ, NE, GE, GT, GT, OR, AND, XOR, LSHIFT, RSHIFT, MOD, ADD, SUB, MUL, DIV, POW, VALUE, ASSIGN = range(29)
 	MATCH = {
 		PUSH    : push,
 		JUMP    : jump,
@@ -74,38 +82,25 @@ class VM:
 		MUL     : binary_op(operator.__mul__),
 		DIV     : binary_op(operator.__div__),
 		POW     : binary_op(operator.__pow__),
+		#
+		VALUE   : value,
+		ASSIGN  : assign,
 	}
 
 	def __init__(self):
 		self.line = 0
 		self.progue = []
 		self.stack = []
+		self.var_values = {}
 
 	def Perform(self, progue):
 		self.line = 0
 		self.progue = progue
 		while True:
 			operation = self.progue[self.line]
-			print
-			print self.stack
-			print self.progue
-			print self.line
-			VM.MATCH[operation](self)
-
-
-vm = VM()
-
-# i = 0
-# while i != 10:
-#	++i
-
-#p = [VM.PUSH, 2, VM.PUSH, 2, VM.ADD, VM.EXIT]
-p = [
-	VM.PUSH,
-	2,
-	VM.PUSH,
-	2,
-	VM.ADD,
-	VM.EXIT,
-]
-vm.Perform(p)
+			try:
+				VM.MATCH[operation](self) == ['exit']
+			except VM.SIGEXIT:
+				break
+		print '='*100
+		return self.stack
