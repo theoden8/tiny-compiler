@@ -3,7 +3,6 @@
 import sys
 
 from Earley_Parser import *
-from PrankyHack import *
 from VirtualMachine import *
 
 
@@ -12,7 +11,6 @@ class Compiler:
 
 	def __init__(self):
 		self.progue = []
-		self.hax = PrankyHack()
 		self.vm = VM()
 
 	def Compile(self, tree, indent = 0):
@@ -34,10 +32,19 @@ class Compiler:
 			self.Compile(tree.children[0], indent)
 		elif GOAL == 'Assignment':
 			self.progue += [self.vm.PUSH, tree.children[2], self.vm.ASSIGN, tree.children[0]]
-#		elif GOAL == 'Loop':
-#			self.progue += [vm.PUSH, tree.children[2], vm.ASSIGN, tree.children[0]]
+#		elif GOAL == 'Loop': # while ( cmd ) Program
+#			self.progue += [self.PUSH]
+#			self.Compile(tree.children[3], indend)
+#			self.Compile(tree.children[5], indend)
 #		elif GOAL == 'Condition':
-#			self.progue += [vm.PUSH, tree.children[2], vm.ASSIGN, tree.children[0]]
+#			if len(tree.children) == 2:
+#				self.Compile(tree.children[1], indent)
+#				self.progue += [vm.PUSH, tree.children[2], vm.ASSIGN, tree.children[0]]
+#				Cmd JumpUnless ... Cmd
+#			if len(tree.children) == 4:
+#				self.Compile(tree.children[-1], indent)
+#				self.progue += [vm.PUSH, tree.children[2], vm.ASSIGN, tree.children[0]]
+#				Cmd JumpUnless ... Cmd
 
 if __name__ == "__main__":
 	t = Tokenizer()
