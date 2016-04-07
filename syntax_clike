@@ -1,14 +1,15 @@
 Start Program
 Program Cmd
-Program {ListOfCmd}
-Program None
-ListOfCmd ListOfCmd;Cmd
-ListOfCmd Cmd
+Program {ListOfCmds}
+ListOfCmds Cmd;ListOfCmds
+ListOfCmds Cmd
+ListOfCmds None
 Cmd Assignment
 Cmd Loop
 Cmd Condition
+Cmd None
 Assignment Variable = Value
-Loop while(Cmd) Program
-Condition if(Cmd) Program
-Condition if(Cmd) Program else Program
+Loop while(Value) Program
+Condition if(Value) Program
+Condition if(Value) Program else Program
 None

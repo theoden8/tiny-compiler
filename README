@@ -1,0 +1,28 @@
+----------------------
+AUTHOR
+----------------------
+
+Created by Kirill Rodriguez on 08/2015.
+
+----------------------
+PROGRAM
+----------------------
+
+This program is implementation of tiny compiler for c-like syntax language. It uses a simple if-else automata to tokenize the code, Earley parser parse into a tree, compiler to translate the tree into virtual machine instructions and executes the code.
+
+The program partially supports pydoc and only runs in verbose mode.
+
+----------------------
+USAGE
+----------------------
+
+To run the program (runs only in verbose mode), use the following
+command:
+
+    python main.py < source < syntax_clike
+
+----------------------
+REFERENCES
+----------------------
+
+1. Zaytsev, S.. 2011. Writing a Primitive and Useless Compiler. [ONLINE] Available at: https://habrahabr.ru/post/133780/. [Accessed 01 April 16].
