@@ -1,106 +1,160 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 import sys
 import string
 import operator
 
 
+PUSH, JMP, JMPIF, JMPUNL, EXIT, NOT, NEG, \
+POS, ABS, LT, LE, EQ, NE, GE, GT, GT, OR, \
+AND, XOR, LSHIFT, RSHIFT, MOD, ADD, SUB, \
+MUL, DIV, POW, VALUE, ASSIGN, RESERVED = \
+    range(30)
+
+
 class VM:
-	SIGEXIT = KeyboardInterrupt
-	def push(self):
-		self.stack.append(self.progue[self.line + 1])
-		self.line += 2
+    """
+    This is a stack machine built on top of python.
+    Its task is to execute the given array of instructions.
+    """
 
-	def jump(self):
-		self.line = self.progue[self.line + 1]
+    _SIGEXIT = KeyboardInterrupt
 
-	def jumpif(self):
-		if self.stack[-2]:
-			self.line = self.progue[self.line + 1]
-		else:
-			self.line += 2
+    def __init__(self):
+        self.line = 0
+        self.program = []
+        self.stack = []
+        self.var_values = {}
 
-	def jumpunless(self):
-		if self.stack[-2]:
-			self.line += 2
-		else:
-			self.line = self.progue[self.line + 1]
+    def _push(self):
+        """
+        Push a number into the stack.
+        """
+        self.stack.append(self.program[self.line + 1])
+        self.line += 2
 
-	def unary_op(func):
-		def opn(self):
-			self.stack.append(func(self.stack.pop()))
-			self.line += 1
-		return opn
+    def _jmp(self):
+        """
+        Virtual machine jump (like goto). JMP + absolute_line.
+        """
+        self.line = self.program[self.line + 1]
 
-	def binary_op(func):
-		def opn(self):
-			self.stack.append(func(self.stack.pop(), self.stack.pop()))
-			self.line += 1
-		return opn
+    def _jmpif(self):
+        """
+        Jump if the element above is true.
+        """
+        if self.stack.pop():
+            self.line = self.program[self.line + 1]
+        else:
+            self.line += 2
 
-	def value(self):
-		self.stack.append(self.var_values[self.progue[self.line + 1]])
-		self.line += 2
+    def _jmpunl(self):
+        """
+        Jump if the element above is false.
+        """
+        if self.stack.pop():
+            self.line += 2
+        else:
+            self.line = self.program[self.line + 1]
 
-	def assign(self):
-		self.var_values[self.progue[self.line + 1]] = self.stack.pop()
-		self.line += 2
+    def _unary_op(func):
+        """
+        Returns decorator for unary operation.
+        """
+        def opn(self):
+            self.stack.append(func(self.stack.pop()))
+            self.line += 1
+        return opn
 
-	def exit(self):
-		raise VM.SIGEXIT
+    def _binary_op(func):
+        """
+        Returns decorator for binary operation.
+        """
+        def opn(self):
+            self.stack.append(func(self.stack.pop(), self.stack.pop()))
+            self.line += 1
+        return opn
 
-	PUSH, JUMP, JUMPIF, JUMPUNL, EXIT, NOT, NEG, POS, ABS, LT, LE, EQ, NE, GE, GT, GT, OR, AND, XOR, LSHIFT, RSHIFT, MOD, ADD, SUB, MUL, DIV, POW, VALUE, ASSIGN = range(29)
-	MATCH = {
-		PUSH    : push,
-		JUMP    : jump,
-		JUMPIF  : jumpif,
-		JUMPUNL : jumpunless,
-		EXIT    : exit,
-		# UNARY
-		NOT     : unary_op(operator.__not__),
-		NEG     : unary_op(operator.__neg__),
-		POS     : unary_op(operator.__pos__),
-		ABS     : unary_op(operator.__abs__),
-		# BINARY
-		LT      : binary_op(operator.__lt__),
-		LE      : binary_op(operator.__le__),
-		EQ      : binary_op(operator.__eq__),
-		NE      : binary_op(operator.__ne__),
-		GE      : binary_op(operator.__ge__),
-		GT      : binary_op(operator.__gt__),
-		GT      : binary_op(operator.__gt__),
+    def _value(self):
+        """
+        Retreive value from the previous variable.
+        """
+        self.stack.append(self.var_values[self.program[self.line + 1]])
+        self.line += 2
 
-		OR      : binary_op(operator.__or__),
-		AND     : binary_op(operator.__and__),
-		XOR     : binary_op(operator.__xor__),
+    def _assign(self):
+        """
+        Assign variable to a value.
+        """
+        self.var_values[self.program[self.line + 1]] = self.stack.pop()
+        self.line += 2
 
-		LSHIFT  : binary_op(operator.__lshift__),
-		RSHIFT  : binary_op(operator.__rshift__),
-		MOD     : binary_op(operator.__mod__),
-		ADD     : binary_op(operator.__add__),
-		SUB     : binary_op(operator.__sub__),
-		MUL     : binary_op(operator.__mul__),
-		DIV     : binary_op(operator.__div__),
-		POW     : binary_op(operator.__pow__),
-		#
-		VALUE   : value,
-		ASSIGN  : assign,
-	}
+    def _exit(self):
+        """
+        Stop executing the code.
+        """
+        raise self._SIGEXIT
 
-	def __init__(self):
-		self.line = 0
-		self.progue = []
-		self.stack = []
-		self.var_values = {}
+    """
+    The following constants are numbers which are matched with instructions.
+    """
+    MATCH = {
+        PUSH:    _push,
+        JMP:     _jmp,
+        JMPIF:   _jmpif,
+        JMPUNL:  _jmpunl,
+        EXIT:    _exit,
+        # UNARY
+        NOT:     _unary_op(lambda x: int(not x)),
+        NEG:     _unary_op(lambda x: int(neg(x))),
+        POS:     _unary_op(lambda x: int(pos(x))),
+        ABS:     _unary_op(operator.__abs__),
+        # BINARY
+        LT:      _binary_op(lambda x, y: int(x < y)),
+        LE:      _binary_op(lambda x, y: int(x <= y)),
+        EQ:      _binary_op(lambda x, y: int(x == y)),
+        NE:      _binary_op(lambda x, y: int(x != y)),
+        GE:      _binary_op(lambda x, y: int(x >= y)),
+        GT:      _binary_op(lambda x, y: int(x > y)),
 
-	def Perform(self, progue):
-		self.line = 0
-		self.progue = progue
-		while True:
-			operation = self.progue[self.line]
-			try:
-				VM.MATCH[operation](self) == ['exit']
-			except VM.SIGEXIT:
-				break
-		print '='*100
-		return self.stack
+        OR:      _binary_op(lambda x, y: int(x or y)),
+        AND:     _binary_op(lambda x, y: int(x and y)),
+        XOR:     _binary_op(lambda x, y: int(x ^ y)),
+
+        LSHIFT:  _binary_op(operator.__lshift__),
+        RSHIFT:  _binary_op(operator.__rshift__),
+        MOD:     _binary_op(operator.__mod__),
+        ADD:     _binary_op(operator.__add__),
+        SUB:     _binary_op(operator.__sub__),
+        MUL:     _binary_op(operator.__mul__),
+        DIV:     _binary_op(operator.__div__),
+        POW:     _binary_op(operator.__pow__),
+        #
+        VALUE:   _value,
+        ASSIGN:  _assign,
+        RESERVED: _exit
+    }
+
+    def Execute(self, program):
+        """
+        Executes the operations stack.
+        """
+        self.line = 0
+        self.program = program
+        OPERATIONS = [
+            "PUSH", "JMP", "JMPIF", "JMPUNL", "EXIT", "NOT", "NEG", "POS",
+            "ABS", "LT", "LE", "EQ", "NE", "GE", "GT", "GT", "OR", "AND",
+            "XOR", "LSHIFT", "RSHIFT", "MOD", "ADD", "SUB", "MUL", "DIV",
+            "POW", "VALUE", "ASSIGN", "RESERVED"
+        ]
+        print [OPERATIONS[step] if type(step) == int and step < len(OPERATIONS) else step for step in self.program]
+        while True:
+            operation = self.program[self.line]
+            try:
+                step = self.program[self.line]
+                print "(" + str(self.line) + ":" + (OPERATIONS[step] if type(step) == int and step < len(OPERATIONS) else step) + ")\t" + str(self.stack)
+                if self.MATCH[operation](self) == EXIT:
+                    raise self._SIGEXIT
+            except self._SIGEXIT:
+                break
+        return self.stack
