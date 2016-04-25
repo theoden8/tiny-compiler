@@ -77,7 +77,7 @@ class VM:
 
     def _value(self):
         """
-        Retreive value from the previous variable.
+        Retreive value from the following variable.
         """
         self.stack.append(self.var_values[self.program[self.line + 1]])
         self.line += 2

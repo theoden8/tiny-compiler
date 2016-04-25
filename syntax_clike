@@ -8,8 +8,10 @@ Cmd Assignment
 Cmd Loop
 Cmd Condition
 Cmd None
-Assignment Variable = Value
-Loop while(Value) Program
-Condition if(Value) Program
-Condition if(Value) Program else Program
+Assignment Variable = Eval
+Loop while(Eval) Program
+Condition if(Eval) Program
+Condition if(Eval) Program else Program
+Eval Value
+Eval Variable
 None
