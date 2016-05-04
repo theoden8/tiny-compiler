@@ -4,7 +4,7 @@ Created by Kirill Rodriguez on 08/2015.
 
 ## Program
 
-This program is a tiny compiler for c-like syntax language. It uses a simple if-else automata to tokenize the code, **Earley parser** algorithm to parse into a tree, **compiler** to translate the tree into virtual machine instructions and executes the code.
+This program is a tiny compiler for c-like syntax language. It uses a simple if-else automata to tokenize the code, **Earley parser** algorithm to parse into a tree, **compiler** to translate the tree into virtual machine instructions, which are then executed.
 
 The program poorly supports **pydoc** and only runs in verbose mode.
 
