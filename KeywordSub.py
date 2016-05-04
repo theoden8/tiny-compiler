@@ -4,17 +4,14 @@ import string
 import sys
 
 
-_KEYWORDS, c = {}, 0
-for i in [
-    'for', 'while', 'until',
+_KEYWORDS = dict([ (j, i) for i, j in enumerate([
+        'for', 'while', 'until',
         'if', 'unless', 'elif', 'else',
         'switch', 'case',
-        '{', '}',
-        '(', ')',
-        ';', ',', '.',
-        '=']:
-    _KEYWORDS[i] = c
-    c += 1
+        '{', '}', '(', ')',
+        ';', ',', '.', '='
+    ]
+)])
 
 
 def keywords_substitution(tokens):
