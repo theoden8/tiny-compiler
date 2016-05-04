@@ -48,12 +48,15 @@ class State:
         )
 
 
+_TYPE_SUBST = int
+
+
 class EarleyParser:
     def __init__(self, rules):
         self.rules = rules
 
     def match_token(self, template, token):
-        if type(token) == int and type(template) == int:
+        if type(token) == _TYPE_SUBST and type(template) == _TYPE_SUBST:
             return template == token
         if type(token) == str and type(template) == str and template not in self.rules:
             return True
@@ -84,13 +87,14 @@ class EarleyParser:
                 State(0, INITIAL_NONTERMINAL, [], r, [])
                 for r in self.rules[INITIAL_NONTERMINAL]
             ]
-            if not i else [] for i in range(len(text) + 1)
+            if i == 0 else [] for i in range(len(text) + 1)
         ]
+
         for i in range(len(text) + 1):
             print "\033[1;92m" + str(text[:i]) + "\033[35m █ \033[93m" + str(text[i:]) + "\033[0m"
             for s in self.states[i]:
                 print s
-                if not s.remains:
+                if s.remains == []:
                     self.complete(s, i)
                 elif s.remains[0] in self.rules:
                     self.predict(s, i)
@@ -105,7 +109,7 @@ class EarleyParser:
 
 
 def PrintTree(s, indent=0):
-    if type(s) not in [type(None), int, str]:
-        print('\t' * indent + str(s))
+    if type(s) not in [type(None), str, _TYPE_SUBST]:
+        print '\t' * indent + str(s)
         for c in s.children:
             PrintTree(c, indent + 1)

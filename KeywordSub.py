@@ -4,12 +4,7 @@ import string
 import sys
 
 
-"""
-This file replaces keywords (strings) with a number corresponding to the keyword.
-"""
-
-_keywordsES = {}
-c = 0
+_KEYWORDS, c = {}, 0
 for i in [
     'for', 'while', 'until',
         'if', 'unless', 'elif', 'else',
@@ -18,13 +13,12 @@ for i in [
         '(', ')',
         ';', ',', '.',
         '=']:
-    _keywordsES[i] = c
+    _KEYWORDS[i] = c
     c += 1
 
 
-def keywords_substitution(text):
+def keywords_substitution(tokens):
     """
-    Transforms an array of tokens into array of recognized tokens.
-    What is recognized is now a number (int).
+    Transforms an array of tokens (str) into array of recognized tokens (str, int).
     """
-    return [_keywordsES[w] if w in _keywordsES else w for w in text]
+    return [_KEYWORDS[t] if t in _KEYWORDS else t for t in tokens]

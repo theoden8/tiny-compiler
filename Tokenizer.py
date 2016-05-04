@@ -11,11 +11,11 @@ _BLANK, _LETTER, _DIGIT, _DOT = range(4)
 
 
 def _char_type(char):
-    if(char.isspace()):
+    if char.isspace():
         return _BLANK
-    elif(char.isalpha() or char == '_'):
+    elif char.isalpha() or char == '_':
         return _LETTER
-    elif(char.isdigit()):
+    elif char.isdigit():
         return _DIGIT
     else:
         return _DOT
@@ -28,48 +28,45 @@ def _tokenize(text):
     p = ""
     for c in text:
         t = _char_type(c)
-        if(not token and t != _BLANK):
+        if token == "" and t != _BLANK:
             token = c
-        elif(t == _BLANK):
-            if(not token):
+        elif t == _BLANK:
+            if token == "":
                 tokens += [token]
                 token = ""
         elif(
-            t == _LETTER and (
-                p == _LETTER or
-                p == _DIGIT
-            ) or
-            t == _DIGIT and (
-                p == _DIGIT
-            )
+            t == _LETTER and p in [_LETTER, _DIGIT] or
+            t == _DIGIT and p in [_DIGIT]
         ):
             token += c
         else:
             tokens += [token]
             token = c
         p = t
-    if(token):
+    if token != "":
         tokens += [token]
         token = ""
     return tokens
 
 
+END = "END\n"
+
+
 def get_list():
-    END = "END\n"
     text = ""
     for line in sys.stdin:
-        if(line == END):
+        if line == END:
             break
         text += line
     return _tokenize(text[:-1])
 
 
 def get_rules():
-    END = "END\n"
     RULE_SET = {}
     for line in sys.stdin:
-        if(line == END):
+        if line == END:
             break
+
         rules = KeywordSub.keywords_substitution(_tokenize(line))
         if rules[0] not in RULE_SET:
             RULE_SET[rules[0]] = []
