@@ -35,13 +35,13 @@ class VM:
 
     def _jmp(self):
         """
-        Virtual machine jump (like goto). JMP + absolute_line.
+        Continue execution from the following line (stored in program itself)
         """
         self.line = self.program[self.line + 1]
 
     def _jmpif(self):
         """
-        Jump if the element above is true.
+        Jump if the top element on stack is true.
         """
         if self.stack.pop():
             self.line = self.program[self.line + 1]
@@ -50,7 +50,7 @@ class VM:
 
     def _jmpunl(self):
         """
-        Jump if the element above is false.
+        Jump if the top element on stack is true.
         """
         if self.stack.pop():
             self.line += 2
@@ -59,7 +59,7 @@ class VM:
 
     def _unary_op(func):
         """
-        Returns decorator for unary operation.
+        Decorator for unary operation.
         """
         def opn(self):
             self.stack.append(func(self.stack.pop()))
@@ -68,7 +68,7 @@ class VM:
 
     def _binary_op(func):
         """
-        Returns decorator for binary operation.
+        Decorator for binary operation.
         """
         def opn(self):
             self.stack.append(func(self.stack.pop(), self.stack.pop()))
@@ -77,14 +77,14 @@ class VM:
 
     def _value(self):
         """
-        Retreive value from the following variable.
+        Retreive value from the variable in the program.
         """
         self.stack.append(self.var_values[self.program[self.line + 1]])
         self.line += 2
 
     def _assign(self):
         """
-        Assign variable to a value.
+        Assign variable to a value on the top of stack.
         """
         self.var_values[self.program[self.line + 1]] = self.stack.pop()
         self.line += 2
