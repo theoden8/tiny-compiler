@@ -1,3 +1,5 @@
+# Tiny Compiler
+
 ## Author
 
 Created by Kirill Rodriguez on 08/2015.
